@@ -47,7 +47,7 @@ export class TrackService {
   }
 
   async getOneTrack(id: ObjectId): Promise<Track> {
-    const track = await this.trackModel.findById(id).populate([
+    const track = await this.trackModel.findById({_id: id}).populate([
       {path: 'comments', select: '_id text author createdAt', populate: {path: 'author', select: '_id username email'}},
       {path: 'addedTrack', select: '_id username email'}
     ])
