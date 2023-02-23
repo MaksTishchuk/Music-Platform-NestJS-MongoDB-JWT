@@ -83,7 +83,7 @@ export class AuthService {
         userId, email, username
       },
       {
-        secret: 'maks-access-secret-key',
+        secret: process.env.ACCESS_SECRET_KEY,
         expiresIn: 60 * 120
       }
     )
@@ -93,7 +93,7 @@ export class AuthService {
         userId, email, username
       },
       {
-        secret: 'maks-refresh-secret-key',
+        secret: process.env.REFRESH_SECRET_KEY,
         expiresIn: 60 * 60 * 24 * 7
       }
     )

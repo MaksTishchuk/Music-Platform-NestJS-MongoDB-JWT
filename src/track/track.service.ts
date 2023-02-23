@@ -9,6 +9,7 @@ import {FileService, FileType} from "../file/file.service";
 import {User, UserDocument} from "../auth/entities/user.entity";
 import {AuthService} from "../auth/auth.service";
 import {createReadStream} from "fs";
+import {UpdateTrackDto} from "./dto/update-track.dto";
 
 @Injectable()
 export class TrackService {
@@ -47,10 +48,36 @@ export class TrackService {
 
   async getOneTrack(id: ObjectId): Promise<Track> {
     const track = await this.trackModel.findById(id).populate([
-      {path: 'comments', select: '_id text author createdAt'},
+      {path: 'comments', select: '_id text author createdAt', populate: {path: 'author', select: '_id username email'}},
       {path: 'addedTrack', select: '_id username email'}
     ])
     return track
+  }
+
+  async updateTrack(id: ObjectId, updateTrackDto: UpdateTrackDto, picture, audio, userId: string) {
+    const track = await this.trackModel.findOne({_id: id, addedTrack: userId})
+    if (!track) throw new HttpException(`Track with ID "${id}" has not been updated!`, HttpStatus.BAD_REQUEST)
+    if (picture) {
+      this.fileService.removeFile(track.picture)
+      picture = this.fileService.createFile(FileType.IMAGE, picture)
+    }
+    if (audio) {
+      this.fileService.removeFile(track.audio)
+      audio = this.fileService.createFile(FileType.AUDIO, audio)
+    }
+
+    await this.trackModel.updateOne(
+      {_id: id, addedTrack: userId},
+      {
+        name: typeof updateTrackDto.name !== 'undefined' ? updateTrackDto.name : track.name,
+        artist: typeof updateTrackDto.artist !== 'undefined' ? updateTrackDto.artist : track.artist,
+        text: typeof updateTrackDto.text !== 'undefined' ? updateTrackDto.text : track.text,
+        listens: track.listens,
+        picture: typeof picture !== 'undefined' ? picture : track.picture,
+        audio: typeof audio !== 'undefined' ? audio : track.audio
+      }
+    )
+    return {'success': true, 'message': `Track with ID "${id}" has been updated!`}
   }
 
   async deleteTrack(id: ObjectId, userId: string) {
@@ -66,10 +93,22 @@ export class TrackService {
     return {'success': true, 'message': `Track with ID "${id}" has been deleted!`}
   }
 
+  async listenTrack(id: ObjectId): Promise<void> {
+    const track = await this.trackModel.findById(id)
+    track.listens += 1
+    track.save()
+  }
+
+  async downloadTrack(id: ObjectId): Promise<string> {
+    const track = await this.trackModel.findById(id)
+    return this.fileService.generateTrackPath(track.audio)
+  }
+
   async addComment(createCommentDto: CreateCommentDto, userId: string): Promise<Comment> {
+    const {text, trackId} = createCommentDto
     const user = await this.authService.getUserById(userId)
-    const track = await this.trackModel.findById(createCommentDto.trackId)
-    const comment = await this.commentModel.create({...createCommentDto, author: user.id})
+    const track = await this.trackModel.findById(trackId)
+    const comment = await this.commentModel.create({text, track: track.id, author: user.id})
     track.comments.push(comment.id)
     await track.save()
     user.comments.push(comment.id)
@@ -77,14 +116,11 @@ export class TrackService {
     return comment
   }
 
-  async listenTrack(id: ObjectId) {
-    const track = await this.trackModel.findById(id)
-    track.listens += 1
-    track.save()
-  }
-
-  async downloadTrack(id: ObjectId) {
-    const track = await this.trackModel.findById(id)
-    return this.fileService.generateTrackPath(track.audio)
+  async deleteComment(id: ObjectId, userId: string) {
+    const comment = await this.commentModel.findOneAndDelete({id, author: userId})
+    if (!comment) throw new HttpException(`Comment with ID "${id}" has not been deleted!`, HttpStatus.BAD_REQUEST)
+    await this.userModel.updateOne({_id: comment.author}, {$pull:{"comments": comment.id }})
+    await this.trackModel.updateOne({_id: comment.track}, {$pull:{"comments": comment.id }})
+    return {'success': true, 'message': `Comment with ID "${id}" has been deleted!`}
   }
 }
