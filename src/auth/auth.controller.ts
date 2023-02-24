@@ -1,4 +1,5 @@
-import {Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards} from '@nestjs/common';
+import {Request} from "express";
 import {AuthService} from "./auth.service";
 import {AuthCreateUserDto} from "./dto/auth-create-user.dto";
 import {Tokens} from "./types/tokens.types";
@@ -14,7 +15,8 @@ import {
   ApiSecurity,
   ApiTags
 } from "@nestjs/swagger";
-import {User} from "./entities/user.entity";
+import {GoogleAuthGuard} from "../common/guards/google-auth-guard";
+import {AuthGuard} from "@nestjs/passport";
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -66,4 +68,13 @@ export class AuthController {
     return this.authService.refreshTokens(userId, refreshToken)
   }
 
+  @Get('/google/login')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth(@Req() req) {}
+
+  @Get('/google/redirect')
+  @UseGuards(GoogleAuthGuard)
+  googleAuthRedirect(@Req() request: Request) {
+    return this.authService.googleAuth(request.user)
+  }
 }

@@ -6,6 +6,8 @@ import {User, UserSchema} from "./entities/user.entity";
 import {AccessTokenStrategy} from "./strategies/accessToken.strategy";
 import {RefreshTokenStrategy} from "./strategies/refreshToken.strategy";
 import {JwtModule} from "@nestjs/jwt";
+import {GoogleStrategy} from "./strategies/google.strategy";
+import {SessionSerializer} from "./serializers/serializer";
 
 @Module({
   imports: [
@@ -15,7 +17,13 @@ import {JwtModule} from "@nestjs/jwt";
     ])
   ],
   controllers: [AuthController],
-  providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
+  providers: [
+    AuthService,
+    AccessTokenStrategy,
+    RefreshTokenStrategy,
+    GoogleStrategy,
+    SessionSerializer
+  ],
   exports: [AuthService]
 })
 export class AuthModule {}

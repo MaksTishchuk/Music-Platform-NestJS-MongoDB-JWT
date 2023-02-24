@@ -18,7 +18,7 @@ export class AuthService {
 
   async register(authCreateUserDto: AuthCreateUserDto): Promise<Tokens> {
     const {email, username, password} = authCreateUserDto
-    const user = await this.userModel.findOne({email: email})
+    const user = await this.userModel.findOne({$or: [{email: email}, {username: username}]})
     if (user) throw new HttpException('User with this credentials already exists!', HttpStatus.BAD_REQUEST)
     const hashPassword = await this.hashData(password)
     const newUser = await this.userModel.create({
@@ -39,6 +39,24 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id, user.email, user.username)
     await this.updateRefreshTokenHash(user.id, tokens.refreshToken)
     return tokens
+  }
+
+  async googleAuth(userInfo) {
+    const {email, username} = userInfo
+    const user = await this.userModel.findOne({email: email})
+    if (user) {
+      const tokens = await this.generateTokens(user.id, user.email, user.username)
+      await this.updateRefreshTokenHash(user.id, tokens.refreshToken)
+      return {tokens}
+    }
+    const newUser = await this.userModel.create({
+      username: username,
+      email: email,
+      password: await this.hashData('131313')
+    })
+    const tokens = await this.generateTokens(newUser.id, newUser.email, newUser.username)
+    await this.updateRefreshTokenHash(newUser.id, tokens.refreshToken)
+    return {tokens}
   }
 
   async logout(userId: string) {
