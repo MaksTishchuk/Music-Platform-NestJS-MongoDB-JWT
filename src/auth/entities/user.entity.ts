@@ -4,6 +4,7 @@ import * as mongoose from 'mongoose';
 import {Track} from "../../track/entities/track.entity";
 import {Comment} from "../../track/entities/comment.entity";
 import {ApiProperty} from "@nestjs/swagger";
+import {Message} from "../../messages/entities/message.entity";
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -37,6 +38,9 @@ export class User {
   @ApiProperty({ description: 'User comments', example: ['User comments'] })
   @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}]})
   comments: Comment[]
+
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'Message'}]})
+  messages: Message[]
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

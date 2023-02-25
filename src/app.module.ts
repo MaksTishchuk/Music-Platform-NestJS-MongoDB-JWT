@@ -7,16 +7,18 @@ import { AuthModule } from './auth/auth.module';
 import * as path from 'path'
 import {ConfigModule} from "@nestjs/config";
 import {PassportModule} from "@nestjs/passport";
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({isGlobal: true}),
     ServeStaticModule.forRoot({rootPath: path.resolve(__dirname, 'static')}),
     MongooseModule.forRoot(process.env.MONGODB_URL),
-    PassportModule.register({session: true}),
+    // PassportModule.register({session: true}),
     TrackModule,
     FileModule,
-    AuthModule
+    AuthModule,
+    MessagesModule
   ],
   controllers: [],
   providers: [],

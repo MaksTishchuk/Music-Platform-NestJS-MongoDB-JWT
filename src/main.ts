@@ -12,18 +12,18 @@ async function bootstrap() {
     app.setGlobalPrefix('api')
     app.enableCors()
     app.useGlobalPipes(new ValidationPipe())
-    app.use(
-      session({
-        secret: 'maks-session-secret',
-        saveUninitialized: false,
-        resave: false,
-        cookie: {
-          maxAge: 60000
-        }
-      })
-    )
-    app.use(passport.initialize())
-    app.use(passport.session())
+    // app.use(
+    //   session({
+    //     secret: 'maks-session-secret',
+    //     saveUninitialized: false,
+    //     resave: false,
+    //     cookie: {
+    //       maxAge: 60000
+    //     }
+    //   })
+    // )
+    // app.use(passport.initialize())
+    // app.use(passport.session())
 
     const config = new DocumentBuilder()
       .addBearerAuth()
